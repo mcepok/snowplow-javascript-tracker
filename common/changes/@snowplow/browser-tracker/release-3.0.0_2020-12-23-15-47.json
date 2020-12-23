@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@snowplow/browser-tracker",
+      "comment": "Add rush to manage monorepo (#883)",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@snowplow/browser-tracker",
+  "email": "\"\"paul@snowplowanalytics.com\"\""
+}

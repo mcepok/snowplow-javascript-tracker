@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@snowplow/browser-tracker",
+      "comment": "Add esm and cjs builds (#882)",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@snowplow/browser-tracker",
+  "email": "\"\"paul@snowplowanalytics.com\"\""
+}

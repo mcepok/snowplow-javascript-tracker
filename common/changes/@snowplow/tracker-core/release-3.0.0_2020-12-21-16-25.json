@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "packageName": "@snowplow/tracker-core",
+      "comment": "Cleanup deprecated methods (#557)",
+      "type": "major"
+    }
+  ],
+  "packageName": "@snowplow/tracker-core",
+  "email": "\"\"paul@snowplowanalytics.com\"\""
+}
