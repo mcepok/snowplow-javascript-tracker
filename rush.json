@@ -400,6 +400,19 @@
       "projectFolder": "libraries/tracker-core",
       "reviewCategory": "libraries",
       "versionPolicyName": "tracker"
+    },
+    {
+      "packageName": "@snowplow/browser-helpers",
+      "projectFolder": "libraries/browser-helpers",
+      "reviewCategory": "libraries",
+      "versionPolicyName": "tracker"
+    },
+
+    {
+      "packageName": "@snowplow/browser-plugin-optimizely",
+      "projectFolder": "plugins/browser-plugin-optimizely",
+      "reviewCategory": "plugins",
+      "versionPolicyName": "tracker"
     }
   ]
 }

@@ -1,0 +1,407 @@
+import map from 'lodash/map';
+import forEach from 'lodash/forEach';
+import { SelfDescribingJson } from '@snowplow/tracker-core';
+import { parseAndValidateInt, isValueInArray } from '@snowplow/browser-helpers';
+import {
+  Experiment,
+  OptimizelySummary,
+  OptimizelyxSummary,
+  State,
+  Variation,
+  Visitor,
+  VisitorAudience,
+  VisitorDimension,
+} from './contexts';
+
+declare global {
+  interface Window {
+    optimizely: {
+      data: { [key: string]: any };
+      get: (property: string) => { [key: string]: any };
+    };
+  }
+}
+
+const OptimizelyPlugin = (
+  summary: boolean = true,
+  xSummary: boolean = true,
+  experiments: boolean = true,
+  states: boolean = true,
+  variations: boolean = true,
+  visitor: boolean = true,
+  audiences: boolean = true,
+  dimensions: boolean
+) => {
+  const windowAlias = window;
+
+  /**
+   * Check that *both* optimizely and optimizely.data exist and return
+   * optimizely.data.property
+   *
+   * @param property optimizely data property
+   * @param snd optional nested property
+   */
+  function getOptimizelyData(property: string, snd?: string) {
+    var data;
+    if (windowAlias.optimizely && windowAlias.optimizely.data) {
+      data = windowAlias.optimizely.data[property];
+      if (typeof snd !== 'undefined' && data !== undefined) {
+        data = data[snd];
+      }
+    }
+    return data;
+  }
+
+  /**
+   * Check that *both* optimizely and optimizely.get exist
+   *
+   * @param property optimizely data property
+   * @param snd optional nested property
+   */
+  function getOptimizelyXData(property: string, snd?: string) {
+    var data;
+    if (windowAlias.optimizely && typeof windowAlias.optimizely.get === 'function') {
+      data = windowAlias.optimizely.get(property);
+      if (typeof snd !== 'undefined' && data !== undefined) {
+        data = data[snd];
+      }
+    }
+    return data;
+  }
+
+  /**
+   * Get data for Optimizely "lite" contexts - active experiments on current page
+   *
+   * @returns Array content of lite optimizely lite context
+   */
+  function getOptimizelySummary(): OptimizelySummary[] {
+    var state = getOptimizelyData('state');
+    var experiments = getOptimizelyData('experiments');
+
+    return map(state && experiments && state.activeExperiments, function (activeExperiment) {
+      var current = experiments[activeExperiment];
+      return {
+        activeExperimentId: activeExperiment.toString(),
+        // User can be only in one variation (don't know why is this array)
+        variation: state.variationIdsMap[activeExperiment][0].toString(),
+        conditional: current && current.conditional,
+        manual: current && current.manual,
+        name: current && current.name,
+      };
+    });
+  }
+
+  /**
+   * Get data for OptimizelyX contexts - active experiments on current page
+   *
+   * @returns Array content of lite optimizely lite context
+   */
+  function getOptimizelyXSummary(): OptimizelyxSummary[] {
+    var state = getOptimizelyXData('state');
+    var experiment_ids = state && state.getActiveExperimentIds();
+    var variationMap = state && state.getVariationMap();
+    var visitor = getOptimizelyXData('visitor');
+
+    return map(experiment_ids, function (activeExperiment) {
+      var variation = variationMap[activeExperiment];
+      var variationName = (variation && variation.name && variation.name.toString()) || null;
+      var variationId = variation && variation.id;
+      var visitorId = (visitor && visitor.visitorId && visitor.visitorId.toString()) || null;
+      return {
+        experimentId: parseAndValidateInt(activeExperiment) || null,
+        variationName: variationName,
+        variation: parseAndValidateInt(variationId) || null,
+        visitorId: visitorId,
+      };
+    });
+  }
+
+  /**
+   * Creates a context from the window['optimizely'].data.experiments object
+   *
+   * @return Array Experiment contexts
+   */
+  function getOptimizelyExperimentContexts() {
+    var experiments = getOptimizelyData('experiments');
+    if (experiments) {
+      var contexts = [];
+
+      for (var key in experiments) {
+        if (experiments.hasOwnProperty(key)) {
+          var context: Experiment = {};
+          context.id = key;
+          var experiment = experiments[key];
+          context.code = experiment.code;
+          context.manual = experiment.manual;
+          context.conditional = experiment.conditional;
+          context.name = experiment.name;
+          context.variationIds = experiment.variation_ids;
+
+          contexts.push({
+            schema: 'iglu:com.optimizely/experiment/jsonschema/1-0-0',
+            data: context,
+          });
+        }
+      }
+      return contexts;
+    }
+    return [];
+  }
+
+  /**
+   * Creates a context from the window['optimizely'].data.state object
+   *
+   * @return Array State contexts
+   */
+  function getOptimizelyStateContexts() {
+    var experimentIds = [];
+    var experiments = getOptimizelyData('experiments');
+    if (experiments) {
+      for (var key in experiments) {
+        if (experiments.hasOwnProperty(key)) {
+          experimentIds.push(key);
+        }
+      }
+    }
+
+    var state = getOptimizelyData('state');
+    if (state) {
+      var contexts = [];
+      var activeExperiments = state.activeExperiments || [];
+
+      for (var i = 0; i < experimentIds.length; i++) {
+        var experimentId = experimentIds[i];
+        var context: State = {};
+        context.experimentId = experimentId;
+        context.isActive = isValueInArray(experimentIds[i], activeExperiments);
+        var variationMap = state.variationMap || {};
+        context.variationIndex = variationMap[experimentId];
+        var variationNamesMap = state.variationNamesMap || {};
+        context.variationName = variationNamesMap[experimentId];
+        var variationIdsMap = state.variationIdsMap || {};
+        if (variationIdsMap[experimentId] && variationIdsMap[experimentId].length === 1) {
+          context.variationId = variationIdsMap[experimentId][0];
+        }
+
+        contexts.push({
+          schema: 'iglu:com.optimizely/state/jsonschema/1-0-0',
+          data: context,
+        });
+      }
+      return contexts;
+    }
+    return [];
+  }
+
+  /**
+   * Creates a context from the window['optimizely'].data.variations object
+   *
+   * @return Array Variation contexts
+   */
+  function getOptimizelyVariationContexts() {
+    var variations = getOptimizelyData('variations');
+    if (variations) {
+      var contexts = [];
+
+      for (var key in variations) {
+        if (variations.hasOwnProperty(key)) {
+          var context: Variation = {};
+          context.id = key;
+          var variation = variations[key];
+          context.name = variation.name;
+          context.code = variation.code;
+
+          contexts.push({
+            schema: 'iglu:com.optimizely/variation/jsonschema/1-0-0',
+            data: context,
+          });
+        }
+      }
+      return contexts;
+    }
+    return [];
+  }
+
+  /**
+   * Creates a context from the window['optimizely'].data.visitor object
+   *
+   * @return object Visitor context
+   */
+  function getOptimizelyVisitorContext() {
+    var visitor = getOptimizelyData('visitor');
+    if (visitor) {
+      var context: Visitor = {};
+      context.browser = visitor.browser;
+      context.browserVersion = visitor.browserVersion;
+      context.device = visitor.device;
+      context.deviceType = visitor.deviceType;
+      context.ip = visitor.ip;
+      var platform = visitor.platform || {};
+      context.platformId = platform.id;
+      context.platformVersion = platform.version;
+      var location = visitor.location || {};
+      context.locationCity = location.city;
+      context.locationRegion = location.region;
+      context.locationCountry = location.country;
+      context.mobile = visitor.mobile;
+      context.mobileId = visitor.mobileId;
+      context.referrer = visitor.referrer;
+      context.os = visitor.os;
+
+      return {
+        schema: 'iglu:com.optimizely/visitor/jsonschema/1-0-0',
+        data: context,
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Creates a context from the window['optimizely'].data.visitor.audiences object
+   *
+   * @return Array VisitorAudience contexts
+   */
+  function getOptimizelyAudienceContexts() {
+    var audienceIds = getOptimizelyData('visitor', 'audiences');
+    if (audienceIds) {
+      var contexts = [];
+
+      for (var key in audienceIds) {
+        if (audienceIds.hasOwnProperty(key)) {
+          var context: VisitorAudience = { id: key, isMember: audienceIds[key] };
+
+          contexts.push({
+            schema: 'iglu:com.optimizely/visitor_audience/jsonschema/1-0-0',
+            data: context,
+          });
+        }
+      }
+      return contexts;
+    }
+    return [];
+  }
+
+  /**
+   * Creates a context from the window['optimizely'].data.visitor.dimensions object
+   *
+   * @return Array VisitorDimension contexts
+   */
+  function getOptimizelyDimensionContexts() {
+    var dimensionIds = getOptimizelyData('visitor', 'dimensions');
+    if (dimensionIds) {
+      var contexts = [];
+
+      for (var key in dimensionIds) {
+        if (dimensionIds.hasOwnProperty(key)) {
+          var context: VisitorDimension = { id: key, value: dimensionIds[key] };
+
+          contexts.push({
+            schema: 'iglu:com.optimizely/visitor_dimension/jsonschema/1-0-0',
+            data: context,
+          });
+        }
+      }
+      return contexts;
+    }
+    return [];
+  }
+
+  /**
+   * Creates an Optimizely lite context containing only data required to join
+   * event to experiment data
+   *
+   * @returns Array of custom contexts
+   */
+  function getOptimizelySummaryContexts(): SelfDescribingJson[] {
+    return map(getOptimizelySummary(), function (experiment) {
+      return {
+        schema: 'iglu:com.optimizely.snowplow/optimizely_summary/jsonschema/1-0-0',
+        data: experiment,
+      };
+    });
+  }
+
+  /**
+   * Creates an OptimizelyX context containing only data required to join
+   * event to experiment data
+   *
+   * @returns Array of custom contexts
+   */
+  function getOptimizelyXSummaryContexts() {
+    return map(getOptimizelyXSummary(), function (experiment) {
+      return {
+        schema: 'iglu:com.optimizely.optimizelyx/summary/jsonschema/1-0-0',
+        data: experiment,
+      };
+    });
+  }
+
+  return {
+    getContexts: () => {
+      const combinedContexts: SelfDescribingJson[] = [];
+
+      // Add Optimizely Contexts
+      if (windowAlias.optimizely) {
+        if (summary) {
+          var activeExperiments = getOptimizelySummaryContexts();
+          forEach(activeExperiments, function (e) {
+            combinedContexts.push(e);
+          });
+        }
+
+        if (xSummary) {
+          var activeXExperiments = getOptimizelyXSummaryContexts();
+          forEach(activeXExperiments, function (e) {
+            combinedContexts.push(e);
+          });
+        }
+
+        if (experiments) {
+          var experimentContexts = getOptimizelyExperimentContexts();
+          for (var i = 0; i < experimentContexts.length; i++) {
+            combinedContexts.push(experimentContexts[i]);
+          }
+        }
+
+        if (states) {
+          var stateContexts = getOptimizelyStateContexts();
+          for (var i = 0; i < stateContexts.length; i++) {
+            combinedContexts.push(stateContexts[i]);
+          }
+        }
+
+        if (variations) {
+          var variationContexts = getOptimizelyVariationContexts();
+          for (var i = 0; i < variationContexts.length; i++) {
+            combinedContexts.push(variationContexts[i]);
+          }
+        }
+
+        if (visitor) {
+          var optimizelyVisitorContext = getOptimizelyVisitorContext();
+          if (optimizelyVisitorContext) {
+            combinedContexts.push(optimizelyVisitorContext);
+          }
+        }
+
+        if (audiences) {
+          var audienceContexts = getOptimizelyAudienceContexts();
+          for (var i = 0; i < audienceContexts.length; i++) {
+            combinedContexts.push(audienceContexts[i]);
+          }
+        }
+
+        if (dimensions) {
+          var dimensionContexts = getOptimizelyDimensionContexts();
+          for (var i = 0; i < dimensionContexts.length; i++) {
+            combinedContexts.push(dimensionContexts[i]);
+          }
+        }
+      }
+
+      return combinedContexts;
+    },
+  };
+};
+
+export { OptimizelyPlugin };

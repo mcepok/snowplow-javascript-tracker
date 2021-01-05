@@ -35,6 +35,7 @@
 import map from 'lodash/map';
 import { warn, isFunction } from './lib/helpers';
 import { newTracker, getTracker, allTrackers } from './snowplow';
+import { OptimizelyPlugin } from '@snowplow/browser-plugin-optimizely';
 
 /************************************************************
  * Proxy object
@@ -43,6 +44,8 @@ import { newTracker, getTracker, allTrackers } from './snowplow';
  ************************************************************/
 
 export function InQueueManager(functionName, asyncQueue) {
+  const basePlugins = [OptimizelyPlugin()];
+
   /**
    * Get an array of trackers to which a function should be applied.
    *
@@ -113,6 +116,10 @@ export function InQueueManager(functionName, asyncQueue) {
       names = parsedString[1];
 
       if (f === 'newTracker') {
+        parameterArray[2] = {
+          ...parameterArray[2],
+          plugins: basePlugins,
+        };
         newTracker(parameterArray[0], parameterArray[1], parameterArray[2], functionName);
         continue;
       }
