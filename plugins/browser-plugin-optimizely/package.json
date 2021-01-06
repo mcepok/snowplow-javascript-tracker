@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "tslib": "^2.0.3",
-    "lodash": "~4.17.20",
+    "lodash": "^4.17.20",
     "@snowplow/tracker-core": "workspace:*",
     "@snowplow/browser-helpers": "workspace:*"
   },

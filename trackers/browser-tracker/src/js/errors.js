@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { addEventListener, isFunction } from './lib/helpers';
+import { addEventListener, isFunction } from '@snowplow/browser-helpers';
 
 var windowAlias = window;
 

@@ -4,9 +4,11 @@ importers:
   ../../libraries/browser-helpers:
     dependencies:
       '@snowplow/tracker-core': 'link:../tracker-core'
+      jstimezonedetect: 1.0.7
       lodash: 4.17.20
       tslib: 2.0.3
     devDependencies:
+      '@types/jstimezonedetect': 1.0.3
       '@types/lodash': 4.14.167
       '@types/node': 14.14.14
       '@typescript-eslint/eslint-plugin': 4.11.0_1b9a0c47bb6bc72fe9ec08ec801e03a4
@@ -20,6 +22,7 @@ importers:
       typescript: 4.1.3
     specifiers:
       '@snowplow/tracker-core': 'workspace:*'
+      '@types/jstimezonedetect': ~1.0.3
       '@types/lodash': ^4.14.161
       '@types/node': ^14.6.0
       '@typescript-eslint/eslint-plugin': ^4.9.0
@@ -27,6 +30,7 @@ importers:
       '@wessberg/rollup-plugin-ts': ^1.3.8
       ava: ^3.13.0
       eslint: ^7.7.0
+      jstimezonedetect: 1.0.7
       lodash: ^4.17.20
       prettier: ^2.1.1
       rollup: ^2.34.0
@@ -95,7 +99,7 @@ importers:
       '@wessberg/rollup-plugin-ts': ^1.3.8
       ava: ^3.13.0
       eslint: ^7.7.0
-      lodash: ~4.17.20
+      lodash: ^4.17.20
       prettier: ^2.1.1
       rollup: ^2.34.0
       ts-node: ^9.0.0
@@ -103,9 +107,9 @@ importers:
       typescript: ^4.1.2
   ../../trackers/browser-tracker:
     dependencies:
+      '@snowplow/browser-helpers': 'link:../../libraries/browser-helpers'
       '@snowplow/browser-plugin-optimizely': 'link:../../plugins/browser-plugin-optimizely'
       '@snowplow/tracker-core': 'link:../../libraries/tracker-core'
-      jstimezonedetect: 1.0.5
       lodash: 4.17.20
       sha1: github.com/pvorb/node-sha1/910081c83f3661507d9d89e66e3f38d8b59d5559
       uuid: 3.4.0
@@ -152,6 +156,7 @@ importers:
       '@rollup/plugin-commonjs': ^17.0.0
       '@rollup/plugin-json': ^4.1.0
       '@rollup/plugin-node-resolve': ^11.0.0
+      '@snowplow/browser-helpers': 'workspace:*'
       '@snowplow/browser-plugin-optimizely': 'workspace:*'
       '@snowplow/tracker-core': 'workspace:*'
       '@types/babel__core': ^7.1.12
@@ -168,7 +173,6 @@ importers:
       dockerode: ^3.2.1
       gulp: ^4.0.2
       jest: ^26.6.3
-      jstimezonedetect: 1.0.5
       lodash: ^4.17.20
       moment-timezone: ^0.5.26
       prettier: ^2.1.1
@@ -1796,6 +1800,10 @@ packages:
     dev: true
     resolution:
       integrity: sha512-3c+yGKvVP5Y9TYBEibGNR+kLtijnj7mYrXRg+WpFb2X9xm04g/DXYkfg4hmzJQosc9snFNUPkbYIhu+KAm6jJw==
+  /@types/jstimezonedetect/1.0.3:
+    dev: true
+    resolution:
+      integrity: sha512-nrhtotVo8xEFMiFX1V5y8GhUhCct74lsaqr6R6VWN/KGvZNdKVPrDGD//9aha360yrmJwk88c1wlRRJuIbvijQ==
   /@types/keyv/3.1.1:
     dependencies:
       '@types/node': 14.14.14
@@ -7406,10 +7414,10 @@ packages:
       '0': node >=0.6.0
     resolution:
       integrity: sha1-MT5mvB5cwG5Di8G3SZwuXFastqI=
-  /jstimezonedetect/1.0.5:
+  /jstimezonedetect/1.0.7:
     dev: false
     resolution:
-      integrity: sha1-k9A1zSDox9ZOsTdc9ap6EKAkRmo=
+      integrity: sha512-ARADHortktl9IZ1tr4GHwGPIAzgz3mLNCbR/YjWtRtc/O0o634O3NeFlpLjv95EvuDA5dc8z6yfgbS8nUc4zcQ==
   /just-debounce/1.0.0:
     dev: true
     resolution:

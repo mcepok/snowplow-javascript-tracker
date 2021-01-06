@@ -33,8 +33,8 @@
  */
 
 import isUndefined from 'lodash/isUndefined';
-import { jstz } from 'jstimezonedetect';
-import { isFunction, cookie } from '../lib/helpers'
+import { determine } from 'jstimezonedetect';
+import { isFunction, cookie } from './helpers';
 
 var windowAlias = window,
   navigatorAlias = navigator,
@@ -89,7 +89,7 @@ export function localStorageAccessible() {
 /*
  * Does browser have cookies enabled (for this site)?
  */
-export function hasCookies(testCookieName) {
+export function hasCookies(testCookieName: string) {
   var cookieName = testCookieName || 'testcookie';
 
   if (isUndefined(navigatorAlias.cookieEnabled)) {
@@ -104,7 +104,7 @@ export function hasCookies(testCookieName) {
  * Returns visitor timezone
  */
 export function detectTimezone() {
-  return jstz.determine().name();
+  return determine().name();
 }
 
 /**
@@ -115,14 +115,17 @@ export function detectTimezone() {
  * - http://responsejs.com/labs/dimensions/
  */
 export function detectViewport() {
-  var e = windowAlias,
-    a = 'inner';
-  if (!('innerWidth' in windowAlias)) {
-    a = 'client';
-    e = documentAlias.documentElement || documentAlias.body;
+  var width, height;
+
+  if ('innerWidth' in windowAlias) {
+    width = windowAlias['innerWidth'];
+    height = windowAlias['innerHeight'];
+  } else {
+    const e = documentAlias.documentElement || documentAlias.body;
+    width = e['clientWidth'];
+    height = e['clientHeight'];
   }
-  var width = e[a + 'Width'];
-  var height = e[a + 'Height'];
+
   if (width >= 0 && height >= 0) {
     return width + 'x' + height;
   } else {
@@ -154,10 +157,10 @@ export function detectDocumentSize() {
  * @param string testCookieName Name to use for the test cookie
  * @return Object containing browser features
  */
-export function detectBrowserFeatures(useCookies, testCookieName) {
+export function detectBrowserFeatures(useCookies: boolean, testCookieName: string) {
   var i,
     mimeType,
-    pluginMap = {
+    pluginMap: Record<string, string> = {
       // document types
       pdf: 'application/pdf',
 
@@ -175,13 +178,13 @@ export function detectBrowserFeatures(useCookies, testCookieName) {
       gears: 'application/x-googlegears',
       ag: 'application/x-silverlight',
     },
-    features = {};
+    features: Record<string, string | number> = {};
 
   // General plugin detection
   if (navigatorAlias.mimeTypes && navigatorAlias.mimeTypes.length) {
     for (i in pluginMap) {
       if (Object.prototype.hasOwnProperty.call(pluginMap, i)) {
-        mimeType = navigatorAlias.mimeTypes[pluginMap[i]];
+        mimeType = navigatorAlias.mimeTypes.namedItem(pluginMap[i]);
         features[i] = mimeType && mimeType.enabledPlugin ? '1' : '0';
       }
     }
@@ -191,7 +194,6 @@ export function detectBrowserFeatures(useCookies, testCookieName) {
   // IE6/IE7 navigator.javaEnabled can't be aliased, so test directly
   if (
     navigatorAlias.constructor === window.Navigator &&
-    typeof navigatorAlias.javaEnabled !== 'unknown' &&
     !isUndefined(navigatorAlias.javaEnabled) &&
     navigatorAlias.javaEnabled()
   ) {
@@ -199,7 +201,7 @@ export function detectBrowserFeatures(useCookies, testCookieName) {
   }
 
   // Firefox
-  if (isFunction(windowAlias.GearsFactory)) {
+  if (isFunction((<any>windowAlias).GearsFactory)) {
     features.gears = '1';
   }
 

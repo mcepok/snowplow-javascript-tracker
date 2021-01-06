@@ -34,7 +34,13 @@
 
 import forEach from 'lodash/forEach';
 import find from 'lodash/find';
-import { getCssClasses, resolveDynamicContexts, getFilter, getTransform, addEventListener } from './lib/helpers';
+import {
+  getCssClasses,
+  resolveDynamicContexts,
+  getFilter,
+  getTransform,
+  addEventListener,
+} from '@snowplow/browser-helpers';
 
 /**
  * Object for handling automatic form tracking

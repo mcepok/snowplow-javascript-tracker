@@ -33,7 +33,13 @@
  */
 
 import isUndefined from 'lodash/isUndefined';
-import { getHostName, getCssClasses, resolveDynamicContexts, addEventListener, getFilter } from './lib/helpers';
+import {
+  getHostName,
+  getCssClasses,
+  resolveDynamicContexts,
+  addEventListener,
+  getFilter,
+} from '@snowplow/browser-helpers';
 
 /**
  * Object for handling automatic link tracking

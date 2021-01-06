@@ -33,7 +33,7 @@
  */
 
 import map from 'lodash/map';
-import { warn, isFunction } from './lib/helpers';
+import { warn, isFunction } from '@snowplow/browser-helpers';
 import { newTracker, getTracker, allTrackers } from './snowplow';
 import { OptimizelyPlugin } from '@snowplow/browser-plugin-optimizely';
 

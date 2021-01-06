@@ -40,7 +40,7 @@
     },
     {
       "name": "@snowplow/browser-helpers",
-      "allowedCategories": [ "plugins" ]
+      "allowedCategories": [ "plugins", "trackers" ]
     },
     {
       "name": "@snowplow/browser-plugin-optimizely",
@@ -57,6 +57,10 @@
     {
       "name": "@types/jest",
       "allowedCategories": [ "trackers" ]
+    },
+    {
+      "name": "@types/jstimezonedetect",
+      "allowedCategories": [ "libraries" ]
     },
     {
       "name": "@types/lodash",
@@ -140,7 +144,7 @@
     },
     {
       "name": "jstimezonedetect",
-      "allowedCategories": [ "trackers" ]
+      "allowedCategories": [ "libraries", "trackers" ]
     },
     {
       "name": "lodash",

@@ -36,6 +36,7 @@ import isString from 'lodash/isString';
 import isUndefined from 'lodash/isUndefined';
 import isObject from 'lodash/isObject';
 import map from 'lodash/map';
+import { SelfDescribingJson } from '@snowplow/tracker-core';
 
 var windowAlias = window,
   documentAlias = document,
@@ -45,7 +46,7 @@ var windowAlias = window,
 /**
  * Cleans up the page title
  */
-export function fixupTitle(title) {
+export function fixupTitle(title: string | { text: string }) {
   if (!isString(title)) {
     title = title.text || '';
 
@@ -60,7 +61,7 @@ export function fixupTitle(title) {
 /**
  * Extract hostname from URL
  */
-export function getHostName(url) {
+export function getHostName(url: string) {
   // scheme : // [username [: password] @] hostname [: port] [/ [path] [? query] [# fragment]]
   var e = new RegExp('^(?:(?:https?|ftp):)/*(?:[^@]+@)?([^:/#]+)'),
     matches = e.exec(url);
@@ -71,7 +72,7 @@ export function getHostName(url) {
 /**
  * Fix-up domain
  */
-export function fixupDomain(domain) {
+export function fixupDomain(domain: string) {
   var dl = domain.length;
 
   // remove trailing '.'
@@ -94,7 +95,7 @@ export function fixupDomain(domain) {
  * @param string oldLocation Optional.
  * @return string The referrer
  */
-export function getReferrer(oldLocation) {
+export function getReferrer(oldLocation: string) {
   var referrer = '';
 
   var fromQs =
@@ -130,21 +131,28 @@ export function getReferrer(oldLocation) {
 /**
  * Cross-browser helper function to add event handler
  */
-export function addEventListener(element, eventType, eventHandler, useCapture) {
+export function addEventListener(
+  element: Element,
+  eventType: string,
+  eventHandler: EventListenerOrEventListenerObject,
+  useCapture: boolean
+) {
   if (element.addEventListener) {
     element.addEventListener(eventType, eventHandler, useCapture);
     return true;
   }
-  if (element.attachEvent) {
-    return element.attachEvent('on' + eventType, eventHandler);
+
+  // IE Support
+  if ((<any>element).attachEvent) {
+    return (<any>element).attachEvent('on' + eventType, eventHandler);
   }
-  element['on' + eventType] = eventHandler;
+  (<any>element)['on' + eventType] = eventHandler;
 }
 
 /**
  * Return value from name-value pair in querystring
  */
-export function fromQuerystring(field, url) {
+export function fromQuerystring(field: string, url: string) {
   var match = new RegExp('^[^#]*[?&]' + field + '=([^&#]*)').exec(url);
   if (!match) {
     return null;
@@ -159,15 +167,18 @@ export function fromQuerystring(field, url) {
  * @param {(object|function(...*): ?object)[]} dynamicOrStaticContexts Array of custom context Objects or custom context generating functions
  * @param {...*} Parameters to pass to dynamic callbacks
  */
-export function resolveDynamicContexts(dynamicOrStaticContexts) {
-  let params = Array.prototype.slice.call(arguments, 1);
+export function resolveDynamicContexts(
+  dynamicOrStaticContexts: (SelfDescribingJson | ((...params: string[]) => SelfDescribingJson))[],
+  ...extraParams: string[]
+) {
   return filter(
     map(dynamicOrStaticContexts, function (context) {
       if (typeof context === 'function') {
         try {
-          return context.apply(null, params);
+          return (context as (...params: string[]) => SelfDescribingJson).apply(null, extraParams);
         } catch (e) {
           //TODO: provide warning
+          return undefined;
         }
       } else {
         return context;
@@ -179,7 +190,7 @@ export function resolveDynamicContexts(dynamicOrStaticContexts) {
 /**
  * Only log deprecation warnings if they won't cause an error
  */
-export function warn(message) {
+export function warn(message: string) {
   if (typeof console !== 'undefined') {
     console.warn('Snowplow: ' + message);
   }
@@ -188,22 +199,22 @@ export function warn(message) {
 /**
  * List the classes of a DOM element without using elt.classList (for compatibility with IE 9)
  */
-export function getCssClasses(elt) {
+export function getCssClasses(elt: Element) {
   return elt.className.match(/\S+/g) || [];
 }
 
 /**
  * Check whether an element has at least one class from a given list
  */
-function checkClass(elt, classList) {
-  var classes = getCssClasses(elt),
-    i;
+function checkClass(elt: Element, classList: { [k: string]: boolean }) {
+  var classes = getCssClasses(elt);
 
-  for (i = 0; i < classes.length; i++) {
-    if (classList[classes[i]]) {
+  for (const className of classes) {
+    if (classList[className]) {
       return true;
     }
   }
+
   return false;
 }
 
@@ -216,7 +227,10 @@ function checkClass(elt, classList) {
  * @param boolean byClass Whether to whitelist/blacklist based on an element's classes (for forms)
  *                        or name attribute (for fields)
  */
-export function getFilter(criterion, byClass) {
+export function getFilter(
+  criterion: { whitelist: string[]; blacklist: string[]; filter: (elt: Element) => boolean },
+  byClass: boolean
+) {
   // If the criterion argument is not an object, add listeners to all elements
   if (Array.isArray(criterion) || !isObject(criterion)) {
     return function () {
@@ -234,17 +248,17 @@ export function getFilter(criterion, byClass) {
     }
 
     // Convert the array of classes to an object of the form {class1: true, class2: true, ...}
-    var specifiedClassesSet = {};
+    var specifiedClassesSet: Record<string, boolean> = {};
     for (var i = 0; i < specifiedClasses.length; i++) {
       specifiedClassesSet[specifiedClasses[i]] = true;
     }
 
     if (byClass) {
-      return function (elt) {
+      return function (elt: HTMLFormElement) {
         return checkClass(elt, specifiedClassesSet) === inclusive;
       };
     } else {
-      return function (elt) {
+      return function (elt: HTMLFormElement) {
         return elt.name in specifiedClassesSet === inclusive;
       };
     }
@@ -256,9 +270,9 @@ export function getFilter(criterion, byClass) {
  *
  * @param object criterion {transform: function (elt) {return the result of transform function applied to element}
  */
-export function getTransform(criterion) {
+export function getTransform(criterion: { transform: (elt: Element) => Element }) {
   if (!isObject(criterion)) {
-    return function (x) {
+    return function (x: Element) {
       return x;
     };
   }
@@ -266,14 +280,10 @@ export function getTransform(criterion) {
   if (criterion.hasOwnProperty('transform')) {
     return criterion.transform;
   } else {
-    return function (x) {
+    return function (x: Element) {
       return x;
     };
   }
-
-  return function (x) {
-    return x;
-  };
 }
 
 /**
@@ -283,7 +293,7 @@ export function getTransform(criterion) {
  * @param string name Name of the querystring pair
  * @param string value Value of the querystring pair
  */
-export function decorateQuerystring(url, name, value) {
+export function decorateQuerystring(url: string, name: string, value: string) {
   var initialQsParams = name + '=' + value;
   var hashSplit = url.split('#');
   var qsSplit = hashSplit[0].split('?');
@@ -319,7 +329,7 @@ export function decorateQuerystring(url, name, value) {
  * @return string The value obtained from localStorage, or
  *                undefined if localStorage is inaccessible
  */
-export function attemptGetLocalStorage(key) {
+export function attemptGetLocalStorage(key: string) {
   try {
     const exp = localStorageAlias.getItem(key + '.expires');
     if (exp === null || +exp > Date.now()) {
@@ -329,7 +339,9 @@ export function attemptGetLocalStorage(key) {
       localStorageAlias.removeItem(key + '.expires');
     }
     return undefined;
-  } catch (e) {}
+  } catch (e) {
+    return undefined;
+  }
 }
 
 /**
@@ -340,10 +352,10 @@ export function attemptGetLocalStorage(key) {
  * @param number ttl Time to live in seconds, defaults to 2 years from Date.now()
  * @return boolean Whether the operation succeeded
  */
-export function attemptWriteLocalStorage(key, value, ttl = 63072000) {
+export function attemptWriteLocalStorage(key: string, value: string, ttl = 63072000) {
   try {
     const t = Date.now() + ttl * 1000;
-    localStorageAlias.setItem(`${key}.expires`, t);
+    localStorageAlias.setItem(`${key}.expires`, t.toString());
     localStorageAlias.setItem(key, value);
     return true;
   } catch (e) {
@@ -357,7 +369,7 @@ export function attemptWriteLocalStorage(key, value, ttl = 63072000) {
  * @param string key
  * @return boolean Whether the operation succeeded
  */
-export function attemptDeleteLocalStorage(key) {
+export function attemptDeleteLocalStorage(key: string) {
   try {
     localStorageAlias.removeItem(key);
     localStorageAlias.removeItem(key + '.expires');
@@ -374,7 +386,7 @@ export function attemptDeleteLocalStorage(key) {
  * @return string The value obtained from sessionStorage, or
  *                undefined if sessionStorage is inaccessible
  */
-export function attemptGetSessionStorage(key) {
+export function attemptGetSessionStorage(key: string) {
   try {
     return sessionStorageAlias.getItem(key);
   } catch (e) {
@@ -389,7 +401,7 @@ export function attemptGetSessionStorage(key) {
  * @param string value
  * @return boolean Whether the operation succeeded
  */
-export function attemptWriteSessionStorage(key, value) {
+export function attemptWriteSessionStorage(key: string, value: string) {
   try {
     sessionStorageAlias.setItem(key, value);
     return true;
@@ -435,7 +447,7 @@ export function findRootDomain() {
  * @param array The array to check within
  * @return boolean Whether it exists
  */
-export function isValueInArray(val, array) {
+export function isValueInArray<T>(val: T, array: T[]) {
   for (var i = 0; i < array.length; i++) {
     if (array[i] === val) {
       return true;
@@ -450,7 +462,7 @@ export function isValueInArray(val, array) {
  * @param cookieName The name of the cookie to delete
  * @param domainName The domain the cookie is in
  */
-export function deleteCookie(cookieName, domainName) {
+export function deleteCookie(cookieName: string, domainName: string) {
   cookie(cookieName, '', -1, '/', domainName);
 }
 
@@ -460,7 +472,7 @@ export function deleteCookie(cookieName, domainName) {
  * @param cookiePrefix The prefix to check for
  * @return array The cookies that begin with the prefix
  */
-export function getCookiesWithPrefix(cookiePrefix) {
+export function getCookiesWithPrefix(cookiePrefix: string) {
   var cookies = documentAlias.cookie.split('; ');
   var cookieNames = [];
   for (var i = 0; i < cookies.length; i++) {
@@ -484,12 +496,20 @@ export function getCookiesWithPrefix(cookiePrefix) {
  * @param secure Boolean to specify if cookie should be secure
  * @return string The cookies value
  */
-export function cookie(name, value, ttl, path, domain, samesite, secure) {
+export function cookie(
+  name: string,
+  value?: string,
+  ttl?: number,
+  path?: string,
+  domain?: string,
+  samesite?: boolean,
+  secure?: boolean
+) {
   if (arguments.length > 1) {
     return (documentAlias.cookie =
       name +
       '=' +
-      encodeURIComponent(value) +
+      encodeURIComponent(value ?? '') +
       (ttl ? '; Expires=' + new Date(+new Date() + ttl * 1000).toUTCString() : '') +
       (path ? '; Path=' + path : '') +
       (domain ? '; Domain=' + domain : '') +
@@ -507,7 +527,7 @@ export function cookie(name, value, ttl, path, domain, samesite, secure) {
  * @param obj The object to parse
  * @return the result of the parse operation
  */
-export function parseAndValidateInt(obj) {
+export function parseAndValidateInt(obj: string) {
   var result = parseInt(obj);
   return isNaN(result) ? undefined : result;
 }
@@ -519,12 +539,12 @@ export function parseAndValidateInt(obj) {
  * @param obj The object to parse
  * @return the result of the parse operation
  */
-export function parseAndValidateFloat(obj) {
+export function parseAndValidateFloat(obj: string) {
   var result = parseFloat(obj);
   return isNaN(result) ? undefined : result;
 }
 
-export function isFunction(func) {
+export function isFunction(func: any) {
   if (func && typeof func === 'function') {
     return true;
   }

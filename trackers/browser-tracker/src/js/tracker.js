@@ -52,9 +52,12 @@ import {
   parseAndValidateInt,
   cookie,
   deleteCookie,
-} from './lib/helpers';
-import { fixupUrl } from './lib/proxies';
-import { detectBrowserFeatures, detectTimezone, detectViewport, detectDocumentSize } from './lib/detectors';
+  fixupUrl,
+  detectBrowserFeatures,
+  detectTimezone,
+  detectViewport,
+  detectDocumentSize,
+} from '@snowplow/browser-helpers';
 import sha1 from 'sha1';
 import { LinkTrackingManager } from './links';
 import { FormTrackingManager } from './forms';

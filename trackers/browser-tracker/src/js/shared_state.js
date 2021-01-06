@@ -33,7 +33,7 @@
  */
 
 import forEach from 'lodash/forEach';
-import { addEventListener } from './lib/helpers';
+import { addEventListener } from '@snowplow/browser-helpers';
 
 export function SharedState() {
   var documentAlias = document,
