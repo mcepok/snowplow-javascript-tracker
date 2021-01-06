@@ -12,7 +12,7 @@ export interface Experiment {
 }
 
 /**
- * Schema for an Optimizely X summary context
+ * Schema for an Optimizely summary context
  */
 export interface OptimizelySummary {
   activeExperimentId?: string;
@@ -20,17 +20,6 @@ export interface OptimizelySummary {
   conditional?: boolean;
   manual?: boolean;
   name?: string;
-  [key: string]: unknown;
-}
-
-/**
- * Schema for an Optimizely X summary context
- */
-export interface OptimizelyxSummary {
-  experimentId?: number | null;
-  variationName?: string | null;
-  variation?: number | null;
-  visitorId?: string | null;
   [key: string]: unknown;
 }
 

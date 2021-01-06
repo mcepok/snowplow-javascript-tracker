@@ -413,6 +413,18 @@
       "projectFolder": "plugins/browser-plugin-optimizely",
       "reviewCategory": "plugins",
       "versionPolicyName": "tracker"
+    },
+    {
+      "packageName": "@snowplow/browser-plugin-optimizely-x",
+      "projectFolder": "plugins/browser-plugin-optimizely-x",
+      "reviewCategory": "plugins",
+      "versionPolicyName": "tracker"
+    },
+    {
+      "packageName": "@snowplow/browser-plugin-client-hints",
+      "projectFolder": "plugins/browser-plugin-client-hints",
+      "reviewCategory": "plugins",
+      "versionPolicyName": "tracker"
     }
   ]
 }

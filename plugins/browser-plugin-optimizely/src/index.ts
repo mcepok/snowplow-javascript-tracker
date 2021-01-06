@@ -1,11 +1,10 @@
 import map from 'lodash/map';
 import forEach from 'lodash/forEach';
 import { SelfDescribingJson } from '@snowplow/tracker-core';
-import { parseAndValidateInt, isValueInArray } from '@snowplow/browser-helpers';
+import { isValueInArray } from '@snowplow/browser-helpers';
 import {
   Experiment,
   OptimizelySummary,
-  OptimizelyxSummary,
   State,
   Variation,
   Visitor,
@@ -17,14 +16,12 @@ declare global {
   interface Window {
     optimizely: {
       data: { [key: string]: any };
-      get: (property: string) => { [key: string]: any };
     };
   }
 }
 
 const OptimizelyPlugin = (
   summary: boolean = true,
-  xSummary: boolean = true,
   experiments: boolean = true,
   states: boolean = true,
   variations: boolean = true,
@@ -53,23 +50,6 @@ const OptimizelyPlugin = (
   }
 
   /**
-   * Check that *both* optimizely and optimizely.get exist
-   *
-   * @param property optimizely data property
-   * @param snd optional nested property
-   */
-  function getOptimizelyXData(property: string, snd?: string) {
-    var data;
-    if (windowAlias.optimizely && typeof windowAlias.optimizely.get === 'function') {
-      data = windowAlias.optimizely.get(property);
-      if (typeof snd !== 'undefined' && data !== undefined) {
-        data = data[snd];
-      }
-    }
-    return data;
-  }
-
-  /**
    * Get data for Optimizely "lite" contexts - active experiments on current page
    *
    * @returns Array content of lite optimizely lite context
@@ -87,31 +67,6 @@ const OptimizelyPlugin = (
         conditional: current && current.conditional,
         manual: current && current.manual,
         name: current && current.name,
-      };
-    });
-  }
-
-  /**
-   * Get data for OptimizelyX contexts - active experiments on current page
-   *
-   * @returns Array content of lite optimizely lite context
-   */
-  function getOptimizelyXSummary(): OptimizelyxSummary[] {
-    var state = getOptimizelyXData('state');
-    var experiment_ids = state && state.getActiveExperimentIds();
-    var variationMap = state && state.getVariationMap();
-    var visitor = getOptimizelyXData('visitor');
-
-    return map(experiment_ids, function (activeExperiment) {
-      var variation = variationMap[activeExperiment];
-      var variationName = (variation && variation.name && variation.name.toString()) || null;
-      var variationId = variation && variation.id;
-      var visitorId = (visitor && visitor.visitorId && visitor.visitorId.toString()) || null;
-      return {
-        experimentId: parseAndValidateInt(activeExperiment) || null,
-        variationName: variationName,
-        variation: parseAndValidateInt(variationId) || null,
-        visitorId: visitorId,
       };
     });
   }
@@ -321,21 +276,6 @@ const OptimizelyPlugin = (
     });
   }
 
-  /**
-   * Creates an OptimizelyX context containing only data required to join
-   * event to experiment data
-   *
-   * @returns Array of custom contexts
-   */
-  function getOptimizelyXSummaryContexts() {
-    return map(getOptimizelyXSummary(), function (experiment) {
-      return {
-        schema: 'iglu:com.optimizely.optimizelyx/summary/jsonschema/1-0-0',
-        data: experiment,
-      };
-    });
-  }
-
   return {
     getContexts: () => {
       const combinedContexts: SelfDescribingJson[] = [];
@@ -345,13 +285,6 @@ const OptimizelyPlugin = (
         if (summary) {
           var activeExperiments = getOptimizelySummaryContexts();
           forEach(activeExperiments, function (e) {
-            combinedContexts.push(e);
-          });
-        }
-
-        if (xSummary) {
-          var activeXExperiments = getOptimizelyXSummaryContexts();
-          forEach(activeXExperiments, function (e) {
             combinedContexts.push(e);
           });
         }

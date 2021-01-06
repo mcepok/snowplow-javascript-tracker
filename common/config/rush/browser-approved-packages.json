@@ -43,7 +43,15 @@
       "allowedCategories": [ "plugins", "trackers" ]
     },
     {
+      "name": "@snowplow/browser-plugin-client-hints",
+      "allowedCategories": [ "trackers" ]
+    },
+    {
       "name": "@snowplow/browser-plugin-optimizely",
+      "allowedCategories": [ "trackers" ]
+    },
+    {
+      "name": "@snowplow/browser-plugin-optimizely-x",
       "allowedCategories": [ "trackers" ]
     },
     {

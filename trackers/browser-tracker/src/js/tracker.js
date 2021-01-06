@@ -286,8 +286,6 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
     ),
     // Flag to prevent the geolocation context being added multiple times
     geolocationContextAdded = false,
-    // Set of contexts to be added to every event
-    autoContexts = argmap.contexts || {},
     // Context to be added to every event
     commonContexts = [],
     // Enhanced Ecommerce Contexts to be added on every `trackEnhancedEcommerceAction` call
@@ -302,28 +300,7 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
       installed: false, // Guard against installing the activity tracker more than once per Tracker instance
       configurations: {},
     },
-    uaClientHints = null,
     plugins = argmap.plugins || [];
-
-  if (autoContexts.clientHints) {
-    if (navigatorAlias.userAgentData) {
-      uaClientHints = {
-        isMobile: navigatorAlias.userAgentData.mobile,
-        brands: navigatorAlias.userAgentData.brands,
-      };
-      if (autoContexts.clientHints.includeHighEntropy && navigatorAlias.userAgentData.getHighEntropyValues) {
-        navigatorAlias.userAgentData
-          .getHighEntropyValues(['platform', 'platformVersion', 'architecture', 'model', 'uaFullVersion'])
-          .then((res) => {
-            uaClientHints.architecture = res.architecture;
-            uaClientHints.model = res.model;
-            uaClientHints.platform = res.platform;
-            uaClientHints.uaFullVersion = res.uaFullVersion;
-            uaClientHints.platformVersion = res.platformVersion;
-          });
-      }
-    }
-  }
 
   let skippedBrowserFeatures = argmap.skippedBrowserFeatures || [];
 
@@ -893,9 +870,6 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
       }
     }
 
-    if (autoContexts.clientHints && uaClientHints) {
-      combinedContexts.push(getUAClientHintsContext());
-    }
     return combinedContexts;
   }
 
@@ -918,18 +892,6 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
       mutSnowplowState.pageViewId = uuid();
     }
     return mutSnowplowState.pageViewId;
-  }
-
-  /**
-   * Put together a http_client_hints context with the UA Client Hint data we have so far
-   *
-   * @return object http_client_hints context
-   */
-  function getUAClientHintsContext() {
-    return {
-      schema: 'iglu:org.ietf/http_client_hints/jsonschema/1-0-0',
-      data: uaClientHints,
-    };
   }
 
   /**

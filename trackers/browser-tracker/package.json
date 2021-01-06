@@ -21,7 +21,9 @@
     "@snowplow/tracker-core": "workspace:*",
     "uuid": "^3.3.3",
     "@snowplow/browser-plugin-optimizely": "workspace:*",
-    "@snowplow/browser-helpers": "workspace:*"
+    "@snowplow/browser-plugin-optimizely-x": "workspace:*",
+    "@snowplow/browser-helpers": "workspace:*",
+    "@snowplow/browser-plugin-client-hints": "workspace:*"
   },
   "devDependencies": {
     "@ampproject/rollup-plugin-closure-compiler": "^0.26.0",
