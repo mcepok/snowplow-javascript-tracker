@@ -1,7 +1,7 @@
 {
-  "name": "@snowplow/browser-plugin-client-hints",
+  "name": "@snowplow/browser-plugin-parrable",
   "version": "1.0.0",
-  "description": "Automatically attaches Client Hints data as a context to events",
+  "description": "Automatically attaches Parrable data as a context to events",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",

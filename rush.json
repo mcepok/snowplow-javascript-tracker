@@ -425,6 +425,18 @@
       "projectFolder": "plugins/browser-plugin-client-hints",
       "reviewCategory": "plugins",
       "versionPolicyName": "tracker"
+    },
+    {
+      "packageName": "@snowplow/browser-plugin-parrable",
+      "projectFolder": "plugins/browser-plugin-parrable",
+      "reviewCategory": "plugins",
+      "versionPolicyName": "tracker"
+    },
+    {
+      "packageName": "@snowplow/browser-plugin-performance-timing",
+      "projectFolder": "plugins/browser-plugin-performance-timing",
+      "reviewCategory": "plugins",
+      "versionPolicyName": "tracker"
     }
   ]
 }

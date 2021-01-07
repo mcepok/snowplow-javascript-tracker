@@ -1,26 +1,29 @@
 import { ClientHintsPlugin } from '@snowplow/browser-plugin-client-hints';
 import { OptimizelyPlugin } from '@snowplow/browser-plugin-optimizely';
 import { OptimizelyXPlugin } from '@snowplow/browser-plugin-optimizely-x';
+import { ParrablePlugin } from '@snowplow/browser-plugin-parrable';
+import { PerformanceTimingPlugin } from '@snowplow/browser-plugin-performance-timing';
 import pluginConfig from '../../plugins.config';
 
-export function plugins(argmap) {
+export function Plugins(argmap) {
   const plugins = [];
-  const { contexts } = argmap;
   const {
-    performanceTiming,
-    gaCookies,
-    geolocation,
-    optimizelyExperiments,
-    optimizelyStates,
-    optimizelyVariations,
-    optimizelyVisitor,
-    optimizelyAudiences,
-    optimizelyDimensions,
-    optimizelySummary,
-    optimizelyXSummary,
-    parrable,
-    clientHints,
-  } = contexts;
+    contexts: {
+      performanceTiming,
+      gaCookies,
+      geolocation,
+      optimizelyExperiments,
+      optimizelyStates,
+      optimizelyVariations,
+      optimizelyVisitor,
+      optimizelyAudiences,
+      optimizelyDimensions,
+      optimizelySummary,
+      optimizelyXSummary,
+      parrable,
+      clientHints,
+    },
+  } = argmap;
 
   // contexts: {
   //     webPage: true,
@@ -53,12 +56,20 @@ export function plugins(argmap) {
     );
   }
 
+  if (pluginConfig.performanceTiming && performanceTiming) {
+    plugins.push(PerformanceTimingPlugin());
+  }
+
   if (pluginConfig.optimizelyX && optimizelyXSummary) {
     plugins.push(OptimizelyXPlugin());
   }
 
   if (pluginConfig.clientHints && clientHints) {
     plugins.push(ClientHintsPlugin(clientHints.includeHighEntropy ? true : false));
+  }
+
+  if (pluginConfig.parrable && parrable) {
+    plugins.push(ParrablePlugin());
   }
 
   return plugins;

@@ -55,6 +55,14 @@
       "allowedCategories": [ "trackers" ]
     },
     {
+      "name": "@snowplow/browser-plugin-parrable",
+      "allowedCategories": [ "trackers" ]
+    },
+    {
+      "name": "@snowplow/browser-plugin-performance-timing",
+      "allowedCategories": [ "trackers" ]
+    },
+    {
       "name": "@snowplow/tracker-core",
       "allowedCategories": [ "libraries", "plugins", "trackers" ]
     },

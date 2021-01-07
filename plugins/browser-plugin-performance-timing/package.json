@@ -1,7 +1,7 @@
 {
-  "name": "@snowplow/browser-plugin-client-hints",
+  "name": "@snowplow/browser-plugin-performance-timing",
   "version": "1.0.0",
-  "description": "Automatically attaches Client Hints data as a context to events",
+  "description": "Automatically attaches Performance Timing data as a context to events",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -17,7 +17,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "tslib": "^2.0.3",
-    "@snowplow/tracker-core": "workspace:*"
+    "@snowplow/tracker-core": "workspace:*",
+    "@snowplow/browser-helpers": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^14.6.0",

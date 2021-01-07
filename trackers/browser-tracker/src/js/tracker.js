@@ -45,7 +45,6 @@ import {
   attemptGetLocalStorage,
   attemptWriteLocalStorage,
   attemptDeleteLocalStorage,
-  isValueInArray,
   fixupTitle,
   fromQuerystring,
   parseAndValidateFloat,
@@ -158,7 +157,6 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
     documentAlias = document,
     windowAlias = window,
     navigatorAlias = navigator,
-    screenAlias = screen,
     // Current URL and Referrer URL
     locationArray = fixupUrl(documentAlias.domain, windowAlias.location.href, getReferrer()),
     domainAlias = fixupDomain(locationArray[0]),
@@ -847,22 +845,6 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
       }
     });
 
-    // Add PerformanceTiming Context
-    if (autoContexts.performanceTiming) {
-      var performanceTimingContext = getPerformanceTimingContext();
-      if (performanceTimingContext) {
-        combinedContexts.push(performanceTimingContext);
-      }
-    }
-
-    //Add Parrable Context
-    if (autoContexts.parrable) {
-      var parrableContext = getParrableContext();
-      if (parrableContext) {
-        combinedContexts.push(parrableContext);
-      }
-    }
-
     if (autoContexts.gdprBasis && gdprBasisData.gdprBasis) {
       var gdprBasisContext = getGdprBasisContext();
       if (gdprBasisContext) {
@@ -906,88 +888,6 @@ export function Tracker(functionName, namespace, version, mutSnowplowState, argm
         id: getPageViewId(),
       },
     };
-  }
-
-  /**
-   * Creates a context from the window.performance.timing object
-   *
-   * @return object PerformanceTiming context
-   */
-  function getPerformanceTimingContext() {
-    var allowedKeys = [
-      'navigationStart',
-      'redirectStart',
-      'redirectEnd',
-      'fetchStart',
-      'domainLookupStart',
-      'domainLookupEnd',
-      'connectStart',
-      'secureConnectionStart',
-      'connectEnd',
-      'requestStart',
-      'responseStart',
-      'responseEnd',
-      'unloadEventStart',
-      'unloadEventEnd',
-      'domLoading',
-      'domInteractive',
-      'domContentLoadedEventStart',
-      'domContentLoadedEventEnd',
-      'domComplete',
-      'loadEventStart',
-      'loadEventEnd',
-      'msFirstPaint',
-      'chromeFirstPaint',
-      'requestEnd',
-      'proxyStart',
-      'proxyEnd',
-    ];
-    var performance =
-      windowAlias.performance ||
-      windowAlias.mozPerformance ||
-      windowAlias.msPerformance ||
-      windowAlias.webkitPerformance;
-    if (performance) {
-      // On Safari, the fields we are interested in are on the prototype chain of
-      // performance.timing so we cannot copy them using lodash.clone
-      var performanceTiming = {};
-      for (var field in performance.timing) {
-        if (isValueInArray(field, allowedKeys) && performance.timing[field] !== null) {
-          performanceTiming[field] = performance.timing[field];
-        }
-      }
-
-      // Old Chrome versions add an unwanted requestEnd field
-      delete performanceTiming.requestEnd;
-
-      return {
-        schema: 'iglu:org.w3/PerformanceTiming/jsonschema/1-0-0',
-        data: performanceTiming,
-      };
-    }
-  }
-
-  /**
-   * Creates a context from the window['_hawk'] object
-   *
-   * @return object The Parrable context
-   */
-  function getParrableContext() {
-    var parrable = window['_hawk'];
-    if (parrable) {
-      var context = { encryptedId: null, optout: null };
-      context['encryptedId'] = parrable.browserid;
-      var regex = new RegExp(
-          '(?:^|;)\\s?' + '_parrable_hawk_optout'.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1') + '=(.*?)(?:;|$)',
-          'i'
-        ),
-        match = document.cookie.match(regex);
-      context['optout'] = match && decodeURIComponent(match[1]) ? match && decodeURIComponent(match[1]) : 'false';
-      return {
-        schema: 'iglu:com.parrable/encrypted_payload/jsonschema/1-0-0',
-        data: context,
-      };
-    }
   }
 
   /* Creates GDPR context Self-describing JSON object

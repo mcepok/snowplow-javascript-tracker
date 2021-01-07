@@ -23,7 +23,9 @@
     "@snowplow/browser-plugin-optimizely": "workspace:*",
     "@snowplow/browser-plugin-optimizely-x": "workspace:*",
     "@snowplow/browser-helpers": "workspace:*",
-    "@snowplow/browser-plugin-client-hints": "workspace:*"
+    "@snowplow/browser-plugin-client-hints": "workspace:*",
+    "@snowplow/browser-plugin-parrable": "workspace:*",
+    "@snowplow/browser-plugin-performance-timing": "workspace:*"
   },
   "devDependencies": {
     "@ampproject/rollup-plugin-closure-compiler": "^0.26.0",
